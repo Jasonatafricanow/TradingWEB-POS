@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "TradingWEB POS",
+    "slug": "tradingweb-pos",
+    "version": "0.1.0",
+    "scheme": "twpos",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tradingweb.pos",
+      "infoPlist": {
+        "NSCameraUsageDescription": "使用相机扫描商品条码",
+        "NSBluetoothAlwaysUsageDescription": "连接蓝牙小票打印机与扫码设备",
+        "NSLocalNetworkUsageDescription": "连接局域网小票打印机（TCP 9100）"
+      }
+    },
+    "android": {
+      "package": "com.tradingweb.pos",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2563EB"
+      },
+      "permissions": ["CAMERA", "INTERNET", "VIBRATE", "BLUETOOTH_CONNECT", "BLUETOOTH_SCAN", "ACCESS_FINE_LOCATION"]
+    },
+    "plugins": [
+      "expo-router",
+      ["expo-camera", { "cameraPermission": "使用相机扫描商品条码" }],
+      ["expo-splash-screen", { "image": "./assets/splash-icon.png", "imageWidth": 180, "backgroundColor": "#FFFFFF" }],
+      "react-native-ble-plx"
+    ]
+  }
+}

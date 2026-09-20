@@ -1,0 +1,36 @@
+node_modules/
+.expo/
+dist/
+web-build/
+ios/
+.expo-audit/
+*.log
+.DS_Store
+.env*
+.worktrees/
+
+# Local tool state
+.reasonix/
+
+# Local Android performance evidence
+.perf-results/
+
+# Android release artifacts
+*.apk
+.release-artifacts/
+
+# Mimosa security hook state
+.mimosa/
+
+# AI Agent / Dev Harness tools
+.claude/
+.hermes/
+.reasonix/
+.agents/
+.codex/
+.openclaw/
+.superpowers/
+.mimosa/
+
+*.apk
+

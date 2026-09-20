@@ -1,0 +1,24 @@
+# OSX
+#
+.DS_Store
+
+# Android/IntelliJ
+#
+build/
+.idea
+.gradle
+local.properties
+*.iml
+*.hprof
+.cxx/
+
+# Bundle artifacts
+*.jsbundle
+
+# Release signing credentials (never commit the keystore or its passwords)
+keystore.properties
+app/pos-release.keystore
+app/debug.keystore
+
+# Kotlin build cache
+.kotlin/

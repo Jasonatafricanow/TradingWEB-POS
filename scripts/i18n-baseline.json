@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "baselineCommit": "a54818d3a5d736f01658a80c387c159da246cc49",
+  "roots": ["app", "src"],
+  "excludes": ["src/i18n"]
+}

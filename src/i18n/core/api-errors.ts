@@ -1,0 +1,345 @@
+import { translate, type TranslationKeyWithoutParams } from './catalog';
+import type { Locale } from './locale';
+
+export const TRADINGWEB_ERROR_CONTRACT_VERSION = 1 as const;
+
+export const TRADINGWEB_ERROR_CODES = [
+  'UNEXPECTED_ERROR',
+  'INVALID_REQUEST',
+  'AUTH_REQUIRED',
+  'FORBIDDEN',
+  'OPERATOR_SESSION_EXPIRED',
+  'OPERATOR_MISMATCH',
+  'PRICING_CHANGED',
+  'INSUFFICIENT_INVENTORY',
+  'IDEMPOTENCY_KEY_REUSED',
+  'CHECKOUT_IDEMPOTENCY_REQUIRED',
+  'PRODUCT_NOT_FOUND',
+  'VARIANT_NOT_FOUND',
+  'PAYMENT_REQUIRED',
+  'PAYMENT_TOTAL_MISMATCH',
+  'ORDER_DISCOUNT_INVALID',
+  'LINE_INVALID',
+  'FULFILLMENT_MIXED',
+  'APPROVAL_REQUIRED',
+  'AUTHENTICATION_REQUIRED',
+  'INVALID_JSON',
+  'INTERNAL_ERROR',
+  'STORE_ID_REQUIRED',
+  'SESSION_INPUT_INVALID',
+  'DEVICE_ID_INVALID',
+  'DEVICE_ID_REQUIRED',
+  'STAFF_NOT_FOUND',
+  'STAFF_INACTIVE',
+  'POS_DISABLED',
+  'STORE_MISMATCH',
+  'PIN_NOT_CONFIGURED',
+  'PIN_LOCKED',
+  'PIN_INVALID',
+  'OPERATOR_SESSION_REQUIRED',
+  'OPERATOR_SESSION_INVALID',
+  'OPERATOR_ACCOUNT_MISMATCH',
+  'OPERATOR_DEVICE_MISMATCH',
+  'OPERATOR_STORE_MISMATCH',
+  'CHECKOUT_REQUEST_INVALID',
+  'CHECKOUT_PERMISSION_REQUIRED',
+  'STORE_NOT_FOUND',
+  'STORE_INACTIVE',
+  'CURRENCY_MISMATCH',
+  'PRICING_VERSION_CHANGED',
+  'PAYMENT_METHOD_NOT_ALLOWED',
+  'AUDIT_BATCH_REQUEST_INVALID',
+  'AUDIT_UUID_CONFLICT',
+  'LOCATION_PURPOSE_INVALID',
+  'LOCATION_STORE_MISMATCH',
+  'SHIFT_REQUEST_INVALID',
+  'SHIFT_ALREADY_OPEN',
+  'SHIFT_NOT_FOUND',
+  'SHIFT_STORE_MISMATCH',
+  'SHIFT_CLOSE_REQUEST_INVALID',
+  'SHIFT_CLOSED',
+  'CASH_MOVEMENT_REQUEST_INVALID',
+  'CASH_KIND_INVALID',
+  'CASH_REASON_INVALID',
+  'TELEMETRY_REQUEST_INVALID',
+  'TELEMETRY_STORE_REQUIRED',
+  'ORDER_ID_INVALID',
+  'ORDER_NOT_FOUND',
+  'ORDER_STORE_MISMATCH',
+  'ORDER_ITEM_NOT_FOUND',
+  'FULFILLMENT_REQUEST_INVALID',
+  'IDEMPOTENCY_KEY_INVALID',
+  'MONEY_INVALID',
+  'POS_ORDER_REQUIRED',
+  'POS_PERMISSION_REQUIRED',
+  'APPROVAL_INVALID_OR_CONSUMED',
+  'DIFFERENCE_PAYMENT_MISMATCH',
+  'PRODUCT_VARIANT_MISMATCH',
+  'REFUND_TOTAL_EXCEEDED',
+  'RETURN_QUANTITY_EXCEEDED',
+  'STORE_LOCATION_REQUIRED',
+  'STORE_UNAVAILABLE',
+  'INVENTORY_CREATE_CONFLICT',
+  'INVENTORY_SCOPE_MISMATCH',
+  'TRANSFER_ACK_INVALID',
+  'TRANSFER_DESTINATION_NOT_FOUND',
+  'TRANSFER_NOT_FOUND',
+  'TRANSFER_STATE_CONFLICT',
+  'PURCHASE_ORDER_ALREADY_RECEIVED',
+  'PURCHASE_ORDER_EMPTY',
+  'PURCHASE_ORDER_NOT_FOUND',
+  'PURCHASE_ORDER_NOT_RECEIVABLE',
+  'PURCHASE_ORDER_SCOPE_MISMATCH',
+  'PARTIAL_RECEIPT_UNSUPPORTED',
+  'REFUND_REQUEST_INVALID',
+  'EXCHANGE_REQUEST_INVALID',
+  'INVENTORY_ADJUSTMENT_REQUEST_INVALID',
+  'PURCHASE_ORDER_REQUEST_INVALID',
+  'PURCHASE_ORDER_RECEIVE_REQUEST_INVALID',
+  'INVENTORY_TRANSFER_REQUEST_INVALID',
+  'FULFILLMENT_FORBIDDEN',
+  'REPORT_QUERY_INVALID',
+  'REFUND_PERMISSION_REQUIRED',
+  'EXCHANGE_PERMISSION_REQUIRED',
+  'APPROVAL_OPERATION_INVALID',
+  'APPROVAL_RESOURCE_HASH_INVALID',
+  'APPROVER_NOT_FOUND',
+  'APPROVER_INACTIVE',
+  'APPROVER_ROLE_REQUIRED',
+  'APPROVER_STORE_MISMATCH',
+  'ORDER_QUERY_INVALID',
+  'ORDER_READ_FORBIDDEN',
+  'PICKUP_STATE_INVALID',
+  'ORDER_NOT_PICKUP',
+  'PICKUP_TRANSITION_INVALID',
+  'REPORT_FORBIDDEN',
+  'REPORT_STORE_MISMATCH',
+] as const;
+
+export type TradingWebErrorCode = (typeof TRADINGWEB_ERROR_CODES)[number];
+export type TradingWebErrorParamValue = string | number | boolean;
+
+const codeSet = new Set<string>(TRADINGWEB_ERROR_CODES);
+const DIRECT_TRANSLATION_KEYS: Readonly<
+  Record<TradingWebErrorCode, TranslationKeyWithoutParams>
+> = {
+  UNEXPECTED_ERROR: 'errors.UNEXPECTED_ERROR',
+  INVALID_REQUEST: 'errors.INVALID_REQUEST',
+  AUTH_REQUIRED: 'errors.AUTH_REQUIRED',
+  FORBIDDEN: 'errors.FORBIDDEN',
+  OPERATOR_SESSION_EXPIRED: 'errors.OPERATOR_SESSION_EXPIRED',
+  OPERATOR_MISMATCH: 'errors.OPERATOR_MISMATCH',
+  PRICING_CHANGED: 'errors.PRICING_CHANGED',
+  INSUFFICIENT_INVENTORY: 'errors.INSUFFICIENT_INVENTORY',
+  IDEMPOTENCY_KEY_REUSED: 'errors.IDEMPOTENCY_KEY_REUSED',
+  CHECKOUT_IDEMPOTENCY_REQUIRED: 'errors.CHECKOUT_IDEMPOTENCY_REQUIRED',
+  PRODUCT_NOT_FOUND: 'errors.PRODUCT_NOT_FOUND',
+  VARIANT_NOT_FOUND: 'errors.VARIANT_NOT_FOUND',
+  PAYMENT_REQUIRED: 'errors.PAYMENT_REQUIRED',
+  PAYMENT_TOTAL_MISMATCH: 'errors.PAYMENT_TOTAL_MISMATCH',
+  ORDER_DISCOUNT_INVALID: 'errors.ORDER_DISCOUNT_INVALID',
+  LINE_INVALID: 'errors.LINE_INVALID',
+  FULFILLMENT_MIXED: 'errors.FULFILLMENT_MIXED',
+  APPROVAL_REQUIRED: 'errors.APPROVAL_REQUIRED',
+  AUTHENTICATION_REQUIRED: 'errors.AUTH_REQUIRED',
+  INVALID_JSON: 'errors.REQUEST_INVALID',
+  INTERNAL_ERROR: 'errors.INTERNAL_ERROR',
+  STORE_ID_REQUIRED: 'errors.REQUEST_INVALID',
+  SESSION_INPUT_INVALID: 'errors.REQUEST_INVALID',
+  DEVICE_ID_INVALID: 'errors.REQUEST_INVALID',
+  DEVICE_ID_REQUIRED: 'errors.REQUEST_INVALID',
+  STAFF_NOT_FOUND: 'errors.STAFF_NOT_FOUND',
+  STAFF_INACTIVE: 'errors.STAFF_NOT_FOUND',
+  POS_DISABLED: 'errors.FORBIDDEN',
+  STORE_MISMATCH: 'errors.FORBIDDEN',
+  PIN_NOT_CONFIGURED: 'errors.PIN_INVALID',
+  PIN_LOCKED: 'errors.PIN_LOCKED',
+  PIN_INVALID: 'errors.PIN_INVALID',
+  OPERATOR_SESSION_REQUIRED: 'errors.OPERATOR_SESSION_EXPIRED',
+  OPERATOR_SESSION_INVALID: 'errors.OPERATOR_SESSION_EXPIRED',
+  OPERATOR_ACCOUNT_MISMATCH: 'errors.FORBIDDEN',
+  OPERATOR_DEVICE_MISMATCH: 'errors.FORBIDDEN',
+  OPERATOR_STORE_MISMATCH: 'errors.FORBIDDEN',
+  CHECKOUT_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  CHECKOUT_PERMISSION_REQUIRED: 'errors.FORBIDDEN',
+  STORE_NOT_FOUND: 'errors.STORE_NOT_FOUND',
+  STORE_INACTIVE: 'errors.STORE_NOT_FOUND',
+  CURRENCY_MISMATCH: 'errors.REQUEST_INVALID',
+  PRICING_VERSION_CHANGED: 'errors.PRICING_CHANGED',
+  PAYMENT_METHOD_NOT_ALLOWED: 'errors.REQUEST_INVALID',
+  AUDIT_BATCH_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  AUDIT_UUID_CONFLICT: 'errors.REQUEST_INVALID',
+  LOCATION_PURPOSE_INVALID: 'errors.REQUEST_INVALID',
+  LOCATION_STORE_MISMATCH: 'errors.FORBIDDEN',
+  SHIFT_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  SHIFT_ALREADY_OPEN: 'errors.REQUEST_INVALID',
+  SHIFT_NOT_FOUND: 'errors.SHIFT_NOT_FOUND',
+  SHIFT_STORE_MISMATCH: 'errors.FORBIDDEN',
+  SHIFT_CLOSE_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  SHIFT_CLOSED: 'errors.REQUEST_INVALID',
+  CASH_MOVEMENT_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  CASH_KIND_INVALID: 'errors.REQUEST_INVALID',
+  CASH_REASON_INVALID: 'errors.REQUEST_INVALID',
+  TELEMETRY_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  TELEMETRY_STORE_REQUIRED: 'errors.REQUEST_INVALID',
+  ORDER_ID_INVALID: 'errors.REQUEST_INVALID',
+  ORDER_NOT_FOUND: 'errors.ORDER_NOT_FOUND',
+  ORDER_STORE_MISMATCH: 'errors.FORBIDDEN',
+  ORDER_ITEM_NOT_FOUND: 'errors.ORDER_NOT_FOUND',
+  FULFILLMENT_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  IDEMPOTENCY_KEY_INVALID: 'errors.REQUEST_INVALID',
+  MONEY_INVALID: 'errors.REQUEST_INVALID',
+  POS_ORDER_REQUIRED: 'errors.REQUEST_INVALID',
+  POS_PERMISSION_REQUIRED: 'errors.FORBIDDEN',
+  APPROVAL_INVALID_OR_CONSUMED: 'errors.APPROVAL_REQUIRED',
+  DIFFERENCE_PAYMENT_MISMATCH: 'errors.PAYMENT_TOTAL_MISMATCH',
+  PRODUCT_VARIANT_MISMATCH: 'errors.VARIANT_NOT_FOUND',
+  REFUND_TOTAL_EXCEEDED: 'errors.REQUEST_INVALID',
+  RETURN_QUANTITY_EXCEEDED: 'errors.REQUEST_INVALID',
+  STORE_LOCATION_REQUIRED: 'errors.STORE_NOT_FOUND',
+  STORE_UNAVAILABLE: 'errors.STORE_NOT_FOUND',
+  INVENTORY_CREATE_CONFLICT: 'errors.INTERNAL_ERROR',
+  INVENTORY_SCOPE_MISMATCH: 'errors.INTERNAL_ERROR',
+  TRANSFER_ACK_INVALID: 'errors.INTERNAL_ERROR',
+  TRANSFER_DESTINATION_NOT_FOUND: 'errors.TRANSFER_NOT_FOUND',
+  TRANSFER_NOT_FOUND: 'errors.TRANSFER_NOT_FOUND',
+  TRANSFER_STATE_CONFLICT: 'errors.REQUEST_INVALID',
+  PURCHASE_ORDER_ALREADY_RECEIVED: 'errors.REQUEST_INVALID',
+  PURCHASE_ORDER_EMPTY: 'errors.REQUEST_INVALID',
+  PURCHASE_ORDER_NOT_FOUND: 'errors.PURCHASE_ORDER_NOT_FOUND',
+  PURCHASE_ORDER_NOT_RECEIVABLE: 'errors.REQUEST_INVALID',
+  PURCHASE_ORDER_SCOPE_MISMATCH: 'errors.FORBIDDEN',
+  PARTIAL_RECEIPT_UNSUPPORTED: 'errors.REQUEST_INVALID',
+  REFUND_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  EXCHANGE_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  INVENTORY_ADJUSTMENT_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  PURCHASE_ORDER_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  PURCHASE_ORDER_RECEIVE_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  INVENTORY_TRANSFER_REQUEST_INVALID: 'errors.REQUEST_INVALID',
+  FULFILLMENT_FORBIDDEN: 'errors.FORBIDDEN',
+  REPORT_QUERY_INVALID: 'errors.REQUEST_INVALID',
+  REFUND_PERMISSION_REQUIRED: 'errors.FORBIDDEN',
+  EXCHANGE_PERMISSION_REQUIRED: 'errors.FORBIDDEN',
+  APPROVAL_OPERATION_INVALID: 'errors.REQUEST_INVALID',
+  APPROVAL_RESOURCE_HASH_INVALID: 'errors.REQUEST_INVALID',
+  APPROVER_NOT_FOUND: 'errors.STAFF_NOT_FOUND',
+  APPROVER_INACTIVE: 'errors.STAFF_NOT_FOUND',
+  APPROVER_ROLE_REQUIRED: 'errors.FORBIDDEN',
+  APPROVER_STORE_MISMATCH: 'errors.FORBIDDEN',
+  ORDER_QUERY_INVALID: 'errors.REQUEST_INVALID',
+  ORDER_READ_FORBIDDEN: 'errors.FORBIDDEN',
+  PICKUP_STATE_INVALID: 'errors.REQUEST_INVALID',
+  ORDER_NOT_PICKUP: 'errors.REQUEST_INVALID',
+  PICKUP_TRANSITION_INVALID: 'errors.REQUEST_INVALID',
+  REPORT_FORBIDDEN: 'errors.FORBIDDEN',
+  REPORT_STORE_MISMATCH: 'errors.FORBIDDEN',
+};
+const SAFE_PARAMS: Partial<Record<TradingWebErrorCode, ReadonlySet<string>>> = {
+  UNEXPECTED_ERROR: new Set(),
+  INVALID_REQUEST: new Set(['field']),
+  AUTH_REQUIRED: new Set(),
+  FORBIDDEN: new Set(),
+  OPERATOR_SESSION_EXPIRED: new Set(),
+  OPERATOR_MISMATCH: new Set(),
+  PRICING_CHANGED: new Set(['authoritative_total', 'currency']),
+  INSUFFICIENT_INVENTORY: new Set(['available', 'requested', 'sku']),
+  IDEMPOTENCY_KEY_REUSED: new Set(),
+  CHECKOUT_IDEMPOTENCY_REQUIRED: new Set(),
+  PRODUCT_NOT_FOUND: new Set(['product_id']),
+  VARIANT_NOT_FOUND: new Set(['variant_id', 'sku']),
+  PAYMENT_REQUIRED: new Set(),
+  PAYMENT_TOTAL_MISMATCH: new Set(['order_total', 'payment_total', 'currency']),
+  ORDER_DISCOUNT_INVALID: new Set(),
+  LINE_INVALID: new Set(['line']),
+  FULFILLMENT_MIXED: new Set(),
+  APPROVAL_REQUIRED: new Set(['operation']),
+};
+
+export type ParsedTradingWebError =
+  | {
+      kind: 'coded';
+      code: TradingWebErrorCode;
+      params: Record<string, TradingWebErrorParamValue>;
+      requestId: string | undefined;
+      retryable: boolean;
+      legacyMessage: string | undefined;
+    }
+  | {
+      kind: 'legacy';
+      message: string;
+      retryable: false;
+    };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isSafeParamValue(value: unknown): value is TradingWebErrorParamValue {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+}
+
+export function isTradingWebErrorCode(value: unknown): value is TradingWebErrorCode {
+  return typeof value === 'string' && codeSet.has(value);
+}
+
+function sanitizeParams(
+  code: TradingWebErrorCode,
+  params: unknown,
+): Record<string, TradingWebErrorParamValue> {
+  if (!isRecord(params)) return {};
+  const allowed = SAFE_PARAMS[code] ?? new Set<string>();
+  return Object.entries(params).reduce<Record<string, TradingWebErrorParamValue>>(
+    (safe, [key, value]) => {
+      if (allowed.has(key) && isSafeParamValue(value)) safe[key] = value;
+      return safe;
+    },
+    {},
+  );
+}
+
+function unexpectedError(): ParsedTradingWebError {
+  return {
+    kind: 'coded',
+    code: 'UNEXPECTED_ERROR',
+    params: {},
+    requestId: undefined,
+    retryable: false,
+    legacyMessage: undefined,
+  };
+}
+
+function isRetryableHttpStatus(status: number | undefined): boolean {
+  return status !== undefined && status >= 500;
+}
+
+export function parseTradingWebErrorEnvelope(
+  value: unknown,
+  status?: number,
+): ParsedTradingWebError {
+  if (!isRecord(value)) return unexpectedError();
+  const rawError = value.error;
+
+  if (typeof rawError === 'string') {
+    return { kind: 'legacy', message: rawError, retryable: false };
+  }
+  if (!isRecord(rawError) || !isTradingWebErrorCode(rawError.code)) {
+    if (typeof value.message === 'string') {
+      return { kind: 'legacy', message: value.message, retryable: false };
+    }
+    return unexpectedError();
+  }
+
+  return {
+    kind: 'coded',
+    code: rawError.code,
+    params: sanitizeParams(rawError.code, rawError.params),
+    requestId: typeof rawError.request_id === 'string' ? rawError.request_id : undefined,
+    retryable: rawError.retryable === true && isRetryableHttpStatus(status),
+    legacyMessage: typeof rawError.message === 'string' ? rawError.message : undefined,
+  };
+}
+
+export function translateApiErrorCode(code: string, locale: Locale): string {
+  const knownCode = isTradingWebErrorCode(code) ? code : 'UNEXPECTED_ERROR';
+  return translate(locale, DIRECT_TRANSLATION_KEYS[knownCode]);
+}
