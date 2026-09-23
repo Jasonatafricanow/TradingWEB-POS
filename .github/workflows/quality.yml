@@ -3,7 +3,7 @@ name: Mobile POS quality gate
 on:
   pull_request:
   push:
-    branches: [master]
+    branches: [main, master]
 
 jobs:
   verify:
