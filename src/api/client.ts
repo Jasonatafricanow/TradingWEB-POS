@@ -43,6 +43,30 @@ export interface HttpConfig {
   deviceId?: string | null;
 }
 
+function resolveAllowedBaseUrl(baseUrl: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(baseUrl);
+  } catch {
+    throw new ApiError("未配置有效的服务器地址（设置 → 服务器地址）", 0, undefined, "SERVER_URL_REQUIRED");
+  }
+
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1", "10.0.2.2"]);
+  const isHttps = parsed.protocol === "https:";
+  const isLocalDevHttp = parsed.protocol === "http:" && localHosts.has(parsed.hostname);
+
+  if (!isHttps && !isLocalDevHttp) {
+    throw new ApiError(
+      "服务器地址必须使用 HTTPS（本机开发地址除外）",
+      0,
+      undefined,
+      "INSECURE_SERVER_URL",
+    );
+  }
+
+  return baseUrl.replace(/\/+$/, "");
+}
+
 export class HttpClient {
   constructor(private getConfig: () => HttpConfig) {}
 
@@ -51,10 +75,10 @@ export class HttpClient {
     opts: { method?: string; body?: unknown; timeoutMs?: number } = {}
   ): Promise<T> {
     const { baseUrl, token, operatorSessionToken, deviceId } = this.getConfig();
-    if (!baseUrl || !/^https?:\/\//.test(baseUrl)) {
-      throw new ApiError('未配置有效的服务器地址（设置 → 服务器地址）', 0, undefined, 'SERVER_URL_REQUIRED');
+    if (!baseUrl) {
+      throw new ApiError("未配置有效的服务器地址（设置 → 服务器地址）", 0, undefined, "SERVER_URL_REQUIRED");
     }
-    const url = baseUrl.replace(/\/+$/, '') + path;
+    const url = resolveAllowedBaseUrl(baseUrl) + path;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 15000);
     let res: Response;
