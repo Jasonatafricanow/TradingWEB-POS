@@ -1,48 +1,62 @@
-# TradingWEB POS · 研发演进与设计基线
+# TradingWEB POS — Development and Verification Notes
 
-本文档记录 TradingWEB POS 系统的关键架构决策、硬件抽象设计、离线同步机制以及安全门禁演进过程。
+This document records the architecture intent behind the mobile POS. Current code, tests,
+CI and backend contracts are stronger authority than historical feature descriptions.
 
----
+## 1. Offline state is not server authority
 
-## 1. 核心架构与技术选型
+The client needs local state because connectivity can disappear during a store workflow.
+That does not make local storage the final business authority.
 
-### 1.1 前端与移动端技术栈
-* **框架**：React Native + Expo SDK 53。
-* **路由**：Expo Router（基于文件系统的类型安全导航，支持原生 Deep Link）。
-* **状态管理**：Zustand（按领域划分：`auth`、`cart`、`shift`、`settings`），配合 `AsyncStorage` 落实本地持久化。
-* **硬件交互**：
-  * 扫码：统一通过 `ScannerHub` 总线分发，抹平相机扫码（`expo-camera`）与实体外设（USB/蓝牙 HID）的差异。
-  * 打印：自研 `ReceiptDoc` 票据描述模型，分层解耦为“文档格式化 -> 指令转换（ESC/POS 或 Plain Text）-> 物理传输（TCP 9100 / BLE / 系统打印）”。
+The design therefore separates:
 
-### 1.2 离线优先与幂等性设计
-在门店网络偶发性断网或网络抖动场景下，必须确保“收银不中断、钱账不差错、绝不重扣款”：
-* **幂等建单**：每笔本地交易创建时即生成全局唯一的 `client_ref` 幂等键。无论断网重试、后台静默上传或手动重新提交，服务端均依据 `client_ref` 判定是否已落单，杜绝重复建单。
-* **离线待同步队列**：未联机交易暂存本地加密队列，当网络恢复监听（NetInfo）触发时，后台按序执行静默同步。
-* **双数据源适配**：采用 Adapter 模式（`src/api/adapters/`），支持在无后端网络时一键切换 `mock.ts` 离线演示模式，提供完整业务闭环。
+```text
+local pending intent
+        !=
+server-accepted business effect
+```
 
----
+A locally created `client_ref` accompanies retried order submission so TradingWEB can
+recognize repeated delivery of the same intended transaction.
 
-## 2. 安全加固基线
+## 2. Hardware sits behind adapters
 
-1. **凭证隔离**：
-   * 采用 `expo-secure-store` 操作移动端操作系统级安全芯片（iOS Keychain 与 Android Keystore），敏感 Token 不进入常规本地存储。
-2. **员工 PIN 加密与防爆破**：
-   * 采用 `sha256$iterations$salt$hash` 格式，杜绝彩虹表碰撞。
-   * 单员工独立计数限速：5 次错误锁定 60 秒，并持久化到存储，防止关进程绕过。
-3. **哈希链防篡改审计**：
-   * 操作日志引入前置 Hash 指针，校验任何本地非正规纂改或恶意清空。
+Scanner and receipt/print behavior are separated from checkout/domain state. Camera, HID,
+BLE, TCP and system-level mechanisms have different capabilities and failure modes; the
+application should not require checkout logic to know the transport details.
 
----
+Public source and automated tests can verify adapter behavior and bundling, but physical
+hardware compatibility remains a separate empirical question.
 
-## 3. 测试与质量保证
+## 3. Local credential/control boundary
+
+The application uses `expo-secure-store` for application tokens and implements staff PIN
+lockout/rate behavior plus integrity checks for local activity records.
+
+The current local PIN representation uses a salted iterated SHA-256 format. This file does
+not label that mechanism "enterprise-grade" or equivalent to a modern password KDF. It is
+a local application control and should be evaluated against the deployment threat model;
+TradingWEB remains responsible for server-side authentication/authorization.
+
+## 4. HTTPS correction
+
+The public release was followed by a security/CI correction that requires HTTPS for POS
+server connections and restores the main-branch quality gate. This is intentionally visible
+in Git history rather than presented as if the initial release already had the boundary.
+
+## 5. Automated verification
+
+Current GitHub Actions runs:
 
 ```bash
-# 执行单元测试
+npm ci
+npm run typecheck
 npm test
-
-# 执行类型检查
-npm run ts-check
-
-# 执行代码规范扫描
 npm run lint
+npm run i18n:check
+npm run bundle:android
 ```
+
+These checks cover code/test/bundle integration. Physical scanner/printer testing, battery
+behavior, long-duration operation and real store recovery should be reported separately
+when performed.
