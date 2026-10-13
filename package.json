@@ -17,6 +17,9 @@
     "android:release:aab": "powershell -ExecutionPolicy Bypass -File scripts/build/android-release.ps1 -Mode aab",
     "android:release:arm64": "powershell -ExecutionPolicy Bypass -File scripts/build/android-release.ps1 -Mode arm64"
   },
+  "overrides": {
+    "shell-quote": "^1.11.0"
+  },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
     "@react-native-async-storage/async-storage": "2.1.2",
