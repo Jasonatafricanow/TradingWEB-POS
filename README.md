@@ -24,7 +24,7 @@ Android build commands and integration requirements: [implementation guide](docs
 
 ## Field evidence
 
-The [single-store acceptance checklist (Chinese)](docs/单店试点验收清单.md) is still pending. Automated tests and an Android build do not establish in-store acceptance. A demo APK, an offline-to-online recording and real device evidence are still needed. Automatic synchronization currently runs on startup, foreground entry and the first queued order; reconnect-triggered retry remains a follow-up.
+The [single-store acceptance checklist (Chinese)](docs/单店试点验收清单.md) is still pending. Automated tests and an Android build do not establish in-store acceptance. A demo APK, an offline-to-online recording and real device evidence are still needed. Automatic synchronization runs on startup, foreground entry, newly eligible pending work and network recovery. While foregrounded, retryable pending orders use 3/6/12/24/48/60-second backoff, capped at 60 seconds. Offline/background states pause scheduling; blocked orders remain excluded. Native network detection still needs device verification.
 
 ## License
 
