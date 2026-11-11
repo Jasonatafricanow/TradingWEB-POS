@@ -571,6 +571,7 @@ export class MockDataSource implements PosDataSource {
       const refundCents = proratedCredit(lines.reduce((sum, row) => sum + row.original.unitPriceCents * row.line.qty, 0), original.subtotalCents, original.totalCents);
       if (refundCents <= 0 || refundCents > original.totalCents - original.refundedCents) throw new Error('Return exceeds remaining amount');
       // Replacement validates and commits before any original-order or return-stock mutation.
+      if (!input.replacement.clientRef) throw new Error("Replacement idempotency key required");
       if (idempotentOrders.has(input.replacement.clientRef)) throw new Error("Replacement order key already used");
       const replacementOrder = await this.createOrder(input.replacement);
       applyMockReturn(lines);
