@@ -513,3 +513,18 @@ describe('cartItemCount', () => {
     expect(cartItemCount(lines)).toBe(1);
   });
 });
+
+describe('quantity and refreshed price boundaries', () => {
+  beforeEach(() => useCart.getState().clear());
+  it('refreshes a repeated product price', () => {
+    useCart.getState().addProduct(makeProduct(), null);
+    useCart.getState().addProduct(makeProduct({ priceCents: 1200 }), null);
+    expect(useCart.getState().lines[0]).toMatchObject({ qty: 2, unitPriceCents: 1200 });
+  });
+  it('rejects noninteger, nonfinite and excessive quantities', () => {
+    useCart.getState().addProduct(makeProduct(), null);
+    const key = useCart.getState().lines[0].key;
+    for (const qty of [NaN, Infinity, 1.5, 10000]) useCart.getState().setQty(key, qty);
+    expect(useCart.getState().lines[0].qty).toBe(1);
+  });
+});

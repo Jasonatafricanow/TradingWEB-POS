@@ -177,3 +177,24 @@ describe('MockDataSource stable entity IDs', () => {
     });
   });
 });
+
+describe('mock return atomicity', () => {
+  it('replays refunds without double stock restoration and rejects changed input', async () => {
+    const source = new MockDataSource();
+    const order = await source.createOrder(orderInput());
+    const request = { clientRef: `refund-${order.id}`, amountCents: 4500, reason: 'return', restock: true,
+      returnItems: [{ orderItemId: order.items[0].id!, qty: 1, restock: true }], approvalToken: null };
+    const first = await source.refundOrder(order.id, request);
+    expect(await source.refundOrder(order.id, request)).toEqual(first);
+    await expect(source.refundOrder(order.id, { ...request, amountCents: 1 })).rejects.toThrow();
+    await expect(source.refundOrder(order.id, { ...request, clientRef: 'another-refund' })).rejects.toThrow();
+  });
+  it('does not mutate the original order when replacement validation fails', async () => {
+    const source = new MockDataSource();
+    const original = await source.createOrder(orderInput());
+    await expect(source.exchangeOrder({ clientRef: `exchange-${original.id}`, originalOrderId: original.id,
+      returnItems: [{ orderItemId: original.items[0].id!, qty: 1, restock: true }],
+      replacement: orderInput({ staffId: 'forged' }), differencePayment: [], approvalToken: null })).rejects.toThrow();
+    expect((await source.fetchOrder(original.id)).refundedCents).toBe(0);
+  });
+});
