@@ -116,6 +116,32 @@ function nextOrderNumber(): string {
   return `P${ym}-${String(orderSeq).padStart(4, '0')}`;
 }
 
+const returnQuantities = new Map<string, number>();
+const returnReplays = new Map<string, { signature: string; result: Order | ExchangeOrderResult }>();
+let returnQueue: Promise<unknown> = Promise.resolve();
+function serializeReturn<T>(work: () => Promise<T>): Promise<T> {
+  const result = returnQueue.then(work, work);
+  returnQueue = result.catch(() => undefined);
+  return result;
+}
+function prepareMockReturn(order: Order, requested: ExchangeOrderInput['returnItems']) {
+  const seen = new Set<string>();
+  return requested.map(line => {
+    const original = order.items.find(item => item.id === line.orderItemId);
+    if (!original || seen.has(line.orderItemId) || !Number.isSafeInteger(line.qty) || line.qty <= 0) throw new Error('Invalid return line');
+    seen.add(line.orderItemId);
+    const key = `${order.id}:${line.orderItemId}`;
+    if ((returnQuantities.get(key) || 0) + line.qty > original.qty) throw new Error('Return quantity exceeds remaining quantity');
+    return { original, line, key };
+  });
+}
+function applyMockReturn(lines: ReturnType<typeof prepareMockReturn>) {
+  for (const { original, line, key } of lines) {
+    returnQuantities.set(key, (returnQuantities.get(key) || 0) + line.qty);
+    if (line.restock) bumpMainStock(original.productId, original.variantId, line.qty);
+  }
+}
+
 export class MockDataSource implements PosDataSource {
   readonly kind = 'mock' as const;
   private mockShift: PosShift | null = null;
@@ -472,7 +498,7 @@ export class MockDataSource implements PosDataSource {
   async fetchRangeReport(query: PosReportQuery): Promise<PosRangeReport> {
     const start = new Date(`${query.dateFrom}T00:00:00`);
     const end = new Date(`${query.dateTo}T23:59:59.999`);
-    const selected = orders.filter((order) => query.source === 'all' || !query.source || order.source === query.source);
+    const selected = orders.filter((order) => (query.source === 'all' || order.source === (query.source ?? 'pos')) && new Date(order.createdAt) >= start && new Date(order.createdAt) <= end);
     const report = aggregateRange(selected, start, end);
     const byPayment = report.byPayment.map((row, index) => ({
       method: row.label,
@@ -502,65 +528,61 @@ export class MockDataSource implements PosDataSource {
   }
 
   async refundOrder(id: string, input: RefundInput): Promise<Order> {
-    await delay(200);
-    const o = orders.find((oo) => oo.id === id);
-    if (!o) throw new Error('订单不存在');
-    const remaining = o.totalCents - o.refundedCents;
-    if (input.amountCents <= 0 || input.amountCents > remaining) {
-      throw new Error(`退款金额需在 0 与剩余可退 ${(remaining / 100).toFixed(2)} 之间`);
-    }
-    o.refundedCents += input.amountCents;
-    o.status = o.refundedCents >= o.totalCents ? 'refunded' : 'partial_refund';
-    if (input.restock) {
-      if (input.items && input.items.length > 0) {
-        // 按行退货：精确回补（换货/行级退货路径）
-        for (const it of input.items) bumpMainStock(it.productId, it.variantId, it.qty);
-      } else if (o.status === 'refunded') {
-        // 仅金额退款：只有全额退款才整单回补（部分退款无法确定退了哪些行）
-        for (const item of o.items) bumpMainStock(item.productId, item.variantId, item.qty);
+    return serializeReturn(async () => {
+      const key = `refund:${input.clientRef}`;
+      const signature = JSON.stringify({ id, input });
+      if (!input.clientRef) throw new Error('Idempotency key required');
+      const replay = returnReplays.get(key);
+      if (replay) {
+        if (replay.signature !== signature) throw new Error('Idempotency key reused');
+        return structuredClone(replay.result) as Order;
       }
-    }
-    return o;
+      const order = orders.find(row => row.id === id);
+      if (!order) throw new Error('Order not found');
+      const lines = prepareMockReturn(order, input.returnItems);
+      if (!Number.isSafeInteger(input.amountCents) || input.amountCents <= 0 || input.amountCents > order.totalCents - order.refundedCents) throw new Error('Invalid refund amount');
+      if (input.restock && !lines.length) throw new Error('Restocking requires verified return lines');
+      if (lines.length) {
+        const credit = proratedCredit(lines.reduce((sum, row) => sum + row.original.unitPriceCents * row.line.qty, 0), order.subtotalCents, order.totalCents);
+        if (input.amountCents !== credit) throw new Error('Refund amount does not match return lines');
+      }
+      applyMockReturn(lines.map(row => ({ ...row, line: { ...row.line, restock: input.restock && row.line.restock } })));
+      order.refundedCents += input.amountCents;
+      order.status = order.refundedCents === order.totalCents ? 'refunded' : 'partial_refund';
+      const result = structuredClone(order);
+      returnReplays.set(key, { signature, result });
+      return result;
+    });
   }
 
   async exchangeOrder(input: ExchangeOrderInput): Promise<ExchangeOrderResult> {
-    await delay(300);
-    const original = orders.find((o) => o.id === input.originalOrderId);
-    if (!original) throw new Error('原订单不存在');
-
-    // Process returns & restock
-    let grossReturnedCents = 0;
-    for (const item of input.returnItems) {
-      const origItem = original.items.find((it) => it.id === item.orderItemId || it.productId === item.orderItemId);
-      if (!origItem) throw new Error('退货商品在原订单中不存在');
-      if (item.qty > origItem.qty) throw new Error('退货数量超限');
-
-      grossReturnedCents += origItem.unitPriceCents * item.qty;
-
-      if (item.restock) {
-        bumpMainStock(origItem.productId, origItem.variantId, item.qty);
+    return serializeReturn(async () => {
+      if (!input.clientRef) throw new Error('Idempotency key required');
+      const key = `exchange:${input.clientRef}`;
+      const signature = JSON.stringify(input);
+      const replay = returnReplays.get(key);
+      if (replay) {
+        if (replay.signature !== signature) throw new Error('Idempotency key reused');
+        return structuredClone(replay.result) as ExchangeOrderResult;
       }
-    }
-
-    // 抵扣按实付比例摊销（与生产口径一致），打折订单不超额退
-    const refundCents = Math.min(
-      proratedCredit(grossReturnedCents, original.subtotalCents, original.totalCents),
-      original.totalCents - original.refundedCents,
-    );
-
-    original.refundedCents += refundCents;
-    original.status = original.refundedCents >= original.totalCents ? 'refunded' : 'partial_refund';
-
-    // Create replacement order
-    const replacementOrder = await this.createOrder(input.replacement);
-    return {
-      exchangeId: `mock-exchange-${Date.now()}`,
-      originalOrderId: original.id,
-      replacementOrder,
-      refundAmountCents: refundCents,
-      newOrderAmountCents: replacementOrder.totalCents,
-      differenceAmountCents: Math.max(0, replacementOrder.totalCents - refundCents),
-    };
+      const original = orders.find(order => order.id === input.originalOrderId);
+      if (!original || !input.returnItems.length) throw new Error('Original order and return lines required');
+      const lines = prepareMockReturn(original, input.returnItems);
+      const refundCents = proratedCredit(lines.reduce((sum, row) => sum + row.original.unitPriceCents * row.line.qty, 0), original.subtotalCents, original.totalCents);
+      if (refundCents <= 0 || refundCents > original.totalCents - original.refundedCents) throw new Error('Return exceeds remaining amount');
+      // Replacement validates and commits before any original-order or return-stock mutation.
+      if (!input.replacement.clientRef) throw new Error("Replacement idempotency key required");
+      if (idempotentOrders.has(input.replacement.clientRef)) throw new Error("Replacement order key already used");
+      const replacementOrder = await this.createOrder(input.replacement);
+      applyMockReturn(lines);
+      original.refundedCents += refundCents;
+      original.status = original.refundedCents === original.totalCents ? 'refunded' : 'partial_refund';
+      const result = { exchangeId: `mock-exchange-${input.clientRef}`, originalOrderId: original.id, replacementOrder,
+        refundAmountCents: refundCents, newOrderAmountCents: replacementOrder.totalCents,
+        differenceAmountCents: replacementOrder.totalCents - refundCents };
+      returnReplays.set(key, { signature, result: structuredClone(result) });
+      return result;
+    });
   }
 
   async adjustStock(input: StockAdjustInput) {

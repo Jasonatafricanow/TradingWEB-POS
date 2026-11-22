@@ -274,7 +274,7 @@ export default function Checkout() {
     const cashCents = payments.filter((p) => p.method === 'cash').reduce((s, p) => s + p.amountCents, 0);
     if (shift.open) {
       shift.recordOrder(order.totalCents, cashCents);
-      if (overCredit > 0) shift.recordRefund(overCredit, overCredit); // 换货退差：现金出钱箱
+      if (exchange) shift.recordRefund(exchange.creditCents, overCredit); // Track full return credit separately from cash paid out
     } else {
       // 未开班收款：不写入班次残留状态，仅审计留痕
       auditLog('no_shift_sale', `单号 ${order.number} 金额 ${formatCents(order.totalCents, symbol)}（现金 ${formatCents(cashCents, symbol)}）`, staff?.name ?? '-');

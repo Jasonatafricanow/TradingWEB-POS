@@ -102,9 +102,13 @@ function migrateVariantId(value: unknown): string | null {
   return legacyMockId(value, 'mock-variant');
 }
 
+export const MAX_CART_QUANTITY = 9999;
+
 function migrateCartLine(value: unknown): CartLine | null {
   if (!value || typeof value !== 'object') return null;
   const line = { ...(value as Record<string, unknown>) };
+  if (line.qty === undefined) line.qty = 1;
+  if (!Number.isSafeInteger(line.qty) || Number(line.qty) < 1 || Number(line.qty) > MAX_CART_QUANTITY) return null;
   const custom = Boolean(line.custom) || line.productId === 0;
   const productId = custom
     ? 'local-product-custom'
@@ -188,7 +192,7 @@ export const useCart = create<CartState>()(
         set((s) => {
           const exist = s.lines.find((l) => l.key === key);
           if (exist) {
-            return { lines: s.lines.map((l) => (l.key === key ? { ...l, qty: l.qty + 1 } : l)) };
+            return { lines: s.lines.map((l) => (l.key === key ? { ...l, qty: Math.min(MAX_CART_QUANTITY, l.qty + 1), unitPriceCents: price } : l)) };
           }
           const line: CartLine = {
             key,
@@ -226,13 +230,15 @@ export const useCart = create<CartState>()(
           ],
         })),
 
-      setQty: (key, qty) =>
+      setQty: (key, qty) => {
+        if (!Number.isSafeInteger(qty) || qty > MAX_CART_QUANTITY) return;
         set((s) => ({
           lines:
             qty <= 0
               ? s.lines.filter((l) => l.key !== key)
               : s.lines.map((l) => (l.key === key ? { ...l, qty } : l)),
-        })),
+        }));
+      },
 
       removeLine: (key) => set((s) => ({ lines: s.lines.filter((l) => l.key !== key) })),
       setDiscount: (discount) => set({ discount }),
@@ -291,6 +297,7 @@ export const useCart = create<CartState>()(
       storage: createJSONStorage(() => AsyncStorage),
       version: 1,
       migrate: migrateCartState,
+      merge: (persisted, current) => ({ ...current, ...migrateCartState(persisted, 0) }),
       partialize: partializeCart,
     }
   )
