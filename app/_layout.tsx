@@ -18,6 +18,7 @@ import { getStackTitles } from '@/i18n/mobile-shell';
 import { markPerformance, measurePerformance } from '@/performance/recorder';
 import { useStoresHydrated, type PersistedStore } from '@/bootstrap/hydration';
 import { createAppLifecycleCoordinator } from '@/services/appLifecycleCoordinator';
+import NetInfo from '@react-native-community/netinfo';
 
 markPerformance('app_start');
 
@@ -87,7 +88,7 @@ function RootLayoutContent() {
     if (blocked && pathname !== '/login') router.replace('/login');
   }, [ready, token, locked, currentStaff, pathname, router]);
 
-  // 有待同步订单且连接 TradingWEB 时：进前台 3 秒后尝试一次，此后每 60 秒重试
+  // 前台及网络恢复时同步；可重试订单按 3、6、12…60 秒退避，后台暂停。
   useEffect(() => {
     if (!ready || dataSource !== 'tradingweb' || !token || locked || !currentStaff) return;
     const snapshot = () => {
@@ -99,7 +100,7 @@ function RootLayoutContent() {
       return {
         identity: [settings.serverUrl, settings.storeId, auth.token, auth.currentStaff.id, operatorId].join('|'),
         canSyncPending: canAutoSyncPending({
-          pendingCount: pending.items.length,
+          pendingCount: pending.items.filter((item) => item.status === 'pending' || item.status === 'syncing').length,
           dataSource: settings.dataSource,
           token: auth.token,
           locked: auth.locked,
@@ -119,15 +120,23 @@ function RootLayoutContent() {
       uploadAudit: () => useAudit.getState().uploadUnsynced(getDataSource()).then(() => undefined).catch(() => undefined),
       flushTelemetry: () => flushTelemetry(getDataSource()).then(() => undefined).catch(() => undefined),
     });
+    if (AppState.currentState !== 'active') coordinator.background();
     coordinator.start();
+    const unsubscribeNetwork = NetInfo.addEventListener((state) => {
+      coordinator.connectionChanged(state.isConnected !== false && state.isInternetReachable !== false);
+    });
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') coordinator.foreground();
+      else coordinator.background();
     });
     const unsubscribePending = usePending.subscribe((state, previous) => {
-      if (previous.items.length === 0 && state.items.length > 0) coordinator.foreground();
+      const wasPending = previous.items.some((item) => item.status === 'pending' || item.status === 'syncing');
+      const hasPending = state.items.some((item) => item.status === 'pending' || item.status === 'syncing');
+      if (!wasPending && hasPending && AppState.currentState === 'active') coordinator.foreground();
     });
     return () => {
       subscription.remove();
+      unsubscribeNetwork();
       unsubscribePending();
       coordinator.stop();
     };
